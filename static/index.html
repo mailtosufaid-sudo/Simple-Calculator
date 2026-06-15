@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f2f5;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #1a1a1a;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 360px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: #111;
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field input:focus {
+      border-color: #4a90e2;
+      background: #fff;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e8e8e8;
+      margin: 1.25rem 0;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+    }
+
+    button {
+      padding: 0.6rem 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-add      { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+    .btn-subtract { background: #fff3e0; color: #e65100; border-color: #ffe0b2; }
+    .btn-multiply { background: #e8eaf6; color: #283593; border-color: #c5cae9; }
+    .btn-divide   { background: #fce4ec; color: #880e4f; border-color: #f8bbd0; }
+
+    .btn-add:hover      { background: #c8e6c9; }
+    .btn-subtract:hover { background: #ffe0b2; }
+    .btn-multiply:hover { background: #c5cae9; }
+    .btn-divide:hover   { background: #f8bbd0; }
+
+    .result {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 0.65rem 0.75rem;
+      min-height: 44px;
+    }
+
+    .result-label {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .result-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .result-value.error { color: #c62828; font-size: 0.85rem; font-weight: 400; }
+    .result-value.idle  { color: #bbb; font-size: 0.85rem; font-weight: 400; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Calculator</h1>
+
+    <div class="field">
+      <label for="numA">Value A</label>
+      <input type="number" id="numA" placeholder="Enter a number" step="any" />
+    </div>
+
+    <div class="field">
+      <label for="numB">Value B</label>
+      <input type="number" id="numB" placeholder="Enter a number" step="any" />
+    </div>
+
+    <hr class="divider" />
+
+    <div class="buttons">
+      <button class="btn-add"      onclick="calculate('add')">Add (+)</button>
+      <button class="btn-subtract" onclick="calculate('subtract')">Subtract (−)</button>
+      <button class="btn-multiply" onclick="calculate('multiply')">Multiply (×)</button>
+      <button class="btn-divide"   onclick="calculate('divide')">Divide (÷)</button>
+    </div>
+
+    <div class="result">
+      <span class="result-label">Result</span>
+      <span class="result-value idle" id="result">—</span>
+    </div>
+  </div>
+
+  <script>
+    async function calculate(op) {
+      const a = document.getElementById('numA').value;
+      const b = document.getElementById('numB').value;
+
+      if (a === '' || b === '') {
+        showResult('Please enter both values', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/${op}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ a: parseFloat(a), b: parseFloat(b) })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showResult(data.result, '');
+        } else {
+          showResult(data.error, 'error');
+        }
+      } catch (e) {
+        showResult('Network error', 'error');
+      }
+    }
+
+    function showResult(msg, cls) {
+      const el = document.getElementById('result');
+      el.textContent = msg;
+      el.className = 'result-value ' + (cls || '');
+    }
+  </script>
+</body>
+</html>
